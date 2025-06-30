@@ -1208,6 +1208,7 @@ plm_frame_t *plm_decode_video(plm_t *self) {
 }
 
 plm_samples_t *plm_decode_audio(plm_t *self) {
+	OUT_DEBUG = 10;
 	if (!plm_init_decoders(self)) {
 		return NULL;
 	}
@@ -3688,8 +3689,8 @@ static const int PLM_AUDIO_SCALEFACTOR_BASE[] = {
 
 typedef int32_t intsample_t;
 #define MULTDIV 256
-#define FLOAT_TO_FIX_2(x) ((intsample_t)roundf(x*2))
-#define FLOAT_TO_FIX_256(x) ((intsample_t)roundf(x*MULTDIV))
+#define FLOAT_TO_FIX_2(x) (x*2)
+#define FLOAT_TO_FIX_256(x) ((intsample_t)(x*MULTDIV))
 
 static const intsample_t PLM_AUDIO_SYNTHESIS_WINDOW[] = {
 	FLOAT_TO_FIX_2(     0.0),FLOAT_TO_FIX_2(     -0.5),FLOAT_TO_FIX_2(     -0.5),FLOAT_TO_FIX_2(     -0.5),FLOAT_TO_FIX_2(     -0.5),FLOAT_TO_FIX_2(     -0.5),
@@ -4085,6 +4086,8 @@ int plm_audio_decode_header(plm_audio_t *self) {
 }
 
 void plm_audio_decode_frame(plm_audio_t *self) {
+	OUT_DEBUG = 11;
+
 	// Prepare the quantizer table lookups
 	int tab3 = 0;
 	int sblimit = 0;
@@ -4098,6 +4101,7 @@ void plm_audio_decode_frame(plm_audio_t *self) {
 	if (self->bound > sblimit) {
 		self->bound = sblimit;
 	}
+	OUT_DEBUG = 12;
 
 	// Read the allocation information
 	for (int sb = 0; sb < self->bound; sb++) {
@@ -4110,6 +4114,7 @@ void plm_audio_decode_frame(plm_audio_t *self) {
 			self->allocation[1][sb] =
 			plm_audio_read_allocation(self, sb, tab3);
 	}
+	OUT_DEBUG = 13;
 
 	// Read scale factor selector information
 	int channels = (self->mode == PLM_AUDIO_MODE_MONO) ? 1 : 2;
@@ -4123,6 +4128,7 @@ void plm_audio_decode_frame(plm_audio_t *self) {
 			self->scale_factor_info[1][sb] = self->scale_factor_info[0][sb];
 		}
 	}
+	OUT_DEBUG = 14;
 
 	// Read scale factors
 	for (int sb = 0; sb < sblimit; sb++) {
@@ -4164,6 +4170,7 @@ void plm_audio_decode_frame(plm_audio_t *self) {
 	int out_pos = 0;
 	for (int part = 0; part < 3; part++) {
 		for (int granule = 0; granule < 4; granule++) {
+			OUT_DEBUG = 15;
 
 			// Read the samples
 			for (int sb = 0; sb < self->bound; sb++) {
@@ -4185,6 +4192,8 @@ void plm_audio_decode_frame(plm_audio_t *self) {
 				self->sample[1][sb][2] = 0;
 			}
 
+			OUT_DEBUG = 16;
+
 			// Synthesis loop
 			for (int p = 0; p < 3; p++) {
 				// Shifting step
@@ -4195,6 +4204,7 @@ void plm_audio_decode_frame(plm_audio_t *self) {
 
 					// Build U, windowing, calculate output
 					memset(self->U, 0, sizeof(self->U));
+					OUT_DEBUG = 3;
 
 					int d_index = 512 - (self->v_pos >> 1);
 					int v_index = (self->v_pos % 128) >> 1;
@@ -4205,6 +4215,7 @@ void plm_audio_decode_frame(plm_audio_t *self) {
 						v_index += 128 - 32;
 						d_index += 64 - 32;
 					}
+					OUT_DEBUG = 4;
 
 					d_index -= (512 - 32);
 					v_index = (128 - 32 + 1024) - v_index;
@@ -4217,20 +4228,15 @@ void plm_audio_decode_frame(plm_audio_t *self) {
 						d_index += 64 - 32;
 					}
 
-					// Output samples
-					#ifdef PLM_AUDIO_SEPARATE_CHANNELS
-						float *out_channel = ch == 0
-							? self->samples.left
-							: self->samples.right;
+					OUT_DEBUG = 5;
+					{
+						volatile int16_t *out_channel = ch == 0
+						?((volatile int16_t *)OUT_L) 
+						: ((volatile int16_t *)OUT_R) ;
 						for (int j = 0; j < 32; j++) {
-							out_channel[out_pos + j] = self->U[j] / -1090519040.0f;
+							*out_channel = self->U[j] / (0x10000);
 						}
-					#else
-						for (int j = 0; j < 32; j++) {
-							self->samples.interleaved[((out_pos + j) << 1) + ch] = 
-								self->U[j] / (0x10000);
-						}
-					#endif
+					}
 				} // End of synthesis channel loop
 				out_pos += 32;
 			} // End of synthesis sub-block loop
@@ -4304,6 +4310,7 @@ void plm_audio_idct36(int s[32][3], int ss, intsample_t *d, int dp)
 	int32_t t01, t02, t03, t04, t05, t06, t07, t08, t09, t10, t11, t12,
 		t13, t14, t15, t16, t17, t18, t19, t20, t21, t22, t23, t24,
 		t25, t26, t27, t28, t29, t30, t31, t32, t33;
+	OUT_DEBUG=1;
 
 	t01 = (s[0][ss] + s[31][ss]);
 	t02 = (s[0][ss] - s[31][ss]) * FLOAT_TO_FIX_256(0.500602998235f) / MULTDIV;
@@ -4565,6 +4572,8 @@ void plm_audio_idct36(int s[32][3], int ss, intsample_t *d, int dp)
 	d[dp + 17] = -t02;
 	d[dp + 15] = t02;
 	d[dp + 16] = 0.0;
+
+	OUT_DEBUG=2;
 }
 
 #endif // PL_MPEG_IMPLEMENTATION
