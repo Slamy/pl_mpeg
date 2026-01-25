@@ -3092,8 +3092,8 @@ void plm_video_decode_picture(plm_video_t *self) {
 	// Decode all slices
 	while (PLM_START_IS_SLICE(self->start_code)) {
 		plm_video_decode_slice(self, self->start_code & 0x000000FF);
-		if (self->macroblock_address >= self->mb_size - 1) {
-			break;
+		printf("XX %d %d\n",self->macroblock_address, self->mb_size);
+		if (self->macroblock_address >= self->mb_size -1 ) {
 		}
 		self->start_code = plm_buffer_next_start_code(self->buffer);
 	}
@@ -3111,7 +3111,7 @@ void plm_video_decode_picture(plm_video_t *self) {
 void plm_video_decode_slice(plm_video_t *self, int slice) {
 	self->slice_begin = TRUE;
 	self->macroblock_address = (slice - 1) * self->mb_width - 1;
-
+	printf("Slice\n");
 	// Reset motion vectors and DC predictors
 	self->motion_backward.h = self->motion_forward.h = 0;
 	self->motion_backward.v = self->motion_forward.v = 0;
@@ -3179,6 +3179,7 @@ void plm_video_decode_macroblock(plm_video_t *self) {
 			self->macroblock_address++;
 			self->mb_row = self->macroblock_address / self->mb_width;
 			self->mb_col = self->macroblock_address % self->mb_width;
+			printf("MB skip %d %d / %d %d\n",self->mb_row,self->mb_col, self->mb_width,self->mb_height);
 
 			plm_video_predict_macroblock(self);
 			increment--;
@@ -3189,7 +3190,9 @@ void plm_video_decode_macroblock(plm_video_t *self) {
 	self->mb_row = self->macroblock_address / self->mb_width;
 	self->mb_col = self->macroblock_address % self->mb_width;
 
+	printf("MB %d %d / %d %d\n",self->mb_row,self->mb_col, self->mb_width,self->mb_height);
 	if (self->mb_col >= self->mb_width || self->mb_row >= self->mb_height) {
+		printf("NopeXXX!\n");
 		return; // corrupt stream;
 	}
 

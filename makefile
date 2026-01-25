@@ -13,7 +13,7 @@
 
 
 CC ?= gcc
-CFLAGS ?= -std=gnu99 -O3
+CFLAGS ?= -std=gnu99 -g
 LFLAGS ?= 
 
 TARGET_EXTRACT ?= pl_mpeg_extract_frames
