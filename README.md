@@ -1,4 +1,4 @@
-# PL_MPEG - MPEG1 Video decoder, MP2 Audio decoder, MPEG-PS demuxer
+# PL_MPEG - MPEG1 Video decoder, MP1/MP2 Audio decoder, MPEG-PS demuxer
 
 Single-file MIT licensed library for C/C++
 
@@ -41,7 +41,7 @@ make player_sdl # only build pl_mpeg_player_sdl
 ## Encoding for PL_MPEG
 
 Most [MPEG-PS](https://en.wikipedia.org/wiki/MPEG_program_stream) (`.mpg`) files
-containing MPEG1 Video ("mpeg1") and MPEG1 Audio Layer II ("mp2") streams should
+containing MPEG1 Video ("mpeg1") and MPEG1 Audio Layer I/II ("mp1"/"mp2") streams should
 work with PL_MPEG. Note that `.mpg` files can also contain MPEG2 Video, which is
 not supported by this library.
 
